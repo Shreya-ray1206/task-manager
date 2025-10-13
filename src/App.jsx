@@ -11,7 +11,12 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  return <div>Task Manager App</div>;
+  return (
+   <div>
+     <h1 className = "text-6xl font-bold mb-4">Hello </h1>
+     <button className="px-6 py-4 mt-4 bg-[hotpink] text-white">Click me </button>
+   </div>
+  );
   
 }
 

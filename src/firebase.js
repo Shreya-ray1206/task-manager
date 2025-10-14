@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // Only import Analytics in production
 let analytics;
@@ -16,6 +17,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 // Initialize Analytics only in production
 if (import.meta.env.MODE === "production") {
@@ -23,5 +25,5 @@ if (import.meta.env.MODE === "production") {
   // analytics = getAnalytics(app);
 }
 
-export { app, analytics, auth };
+export { app, analytics, auth, db };
 

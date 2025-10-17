@@ -31,13 +31,18 @@ const LoginForm = ({ onToggle }) => {
       alert("Login successful!");
     } catch (err) {
       console.error("Login error:", err);
-      // Show friendly error messages
-      if (err.code === "auth/invalid-email") setError("Invalid email format.");
-      else if (err.code === "auth/user-not-found")
-        setError("No account found with this email.");
-      else if (err.code === "auth/wrong-password")
-        setError("Incorrect password.");
-      else setError("Failed to log in. Try again.");
+
+      if (err.code === "auth/invalid-email") {
+       setError("Invalid email format.");
+      } else if (err.code === "auth/user-not-found") {
+       setError("No account found with this email.");
+      } else if (err.code === "auth/wrong-password") {
+       setError("Incorrect password.");
+      } else if (err.code === "auth/invalid-credential") {
+       setError("Invalid email or password. Please try again.");
+      } else {
+       setError("Failed to log in. Try again.");
+      }
     } finally {
       setLoading(false);
     }

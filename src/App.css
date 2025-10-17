@@ -1,10 +1,10 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  /* remove max-width/padding that create side gutters */
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  text-align: left; /* optional — centered text may not be wanted globally */
 }
-
 .logo {
   height: 6em;
   padding: 1.5em;

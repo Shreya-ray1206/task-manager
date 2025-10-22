@@ -6,6 +6,7 @@ import { collection, getDocs } from "firebase/firestore";
 import  {onAuthStateChanged} from "firebase/auth"
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
+import MyTasksPage from "./pages/MyTasksPage"; 
 
 let didFetch = false
 function App() {
@@ -16,7 +17,7 @@ function App() {
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser)  => {
        setUser(currentUser);
-      console.log(user ? "User logged in" : "No user logged in");
+      console.log(currentUser ? "User logged in" : "No user logged in");
     });
 
      // Fetch Firestore data
@@ -51,6 +52,11 @@ function App() {
           path="/dashboard"
           element={user ? <DashboardPage /> : <Navigate to="/" />}
         />
+        <Route
+          path = "/my-tasks"
+          element = {user ? <MyTasksPage/> : <Navigate to= "/" />}
+        />
+
       </Routes>
     </Router>
   );

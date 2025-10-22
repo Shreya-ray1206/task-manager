@@ -7,7 +7,7 @@ const AuthPage = () => {
   const toggleForm = () => setIsLogin((prev) => !prev);
 
   return (
-    <div className="flex items-center justify-center min-h-screen w-screen bg-gradient-to-r from-blue-500 to-blue-700 fixed top-0 left-0">
+    <div className="flex items-center justify-center min-h-screen w-screen bg-gradient-to-r from-[#89BAFA] to-[#FAB0FF] fixed top-0 left-0">
       {isLogin ? (
         <LoginForm onToggle={toggleForm} />
       ) : (

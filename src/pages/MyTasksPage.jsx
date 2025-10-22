@@ -1,20 +1,19 @@
 import React from "react";
 import Sidebar from "../components/Sidebar";
-import DashboardContent from "../components/DashboardContent";
+import MyTasksBoard from "../components/MyTasksBoard";
 
-const DashboardPage = () => {
+const MyTasksPage = () => {
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#89BAFA] to-[#FAB0FF] flex flex-row">
-
       {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Content */}
+      {/* Main Task Board */}
       <div className="flex-1 p-8 overflow-y-auto bg-white/90 backdrop-blur-md  shadow-inner">
-        <DashboardContent />
+        <MyTasksBoard />
       </div>
     </div>
   );
 };
 
-export default DashboardPage;
+export default MyTasksPage;

@@ -7,6 +7,7 @@ import  {onAuthStateChanged} from "firebase/auth"
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import MyTasksPage from "./pages/MyTasksPage"; 
+import { Toaster } from "react-hot-toast"; 
 
 let didFetch = false
 function App() {
@@ -40,6 +41,31 @@ function App() {
 
    return (
     <Router>
+       <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "white",
+            color: "#090979",
+            fontWeight: 500,
+            borderRadius: "10px",
+            boxShadow: "0px 3px 10px rgba(0,0,0,0.1)",
+          },
+          success: {
+            iconTheme: {
+              primary: "#27AECC",
+              secondary: "#fff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#e63946",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
       <Routes>
         {/* Default route → goes to AuthPage if not logged in */}
         <Route

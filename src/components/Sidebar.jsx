@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
+import Button from "./Button";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -22,18 +23,22 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="w-64 h-screen bg-white/20 backdrop-blur-md text-white shadow-xl flex flex-col justify-between p-4">
+    <div className="w-64 h-screen bg-gradient-to-b from-[#090979] to-[#27AECC] text-white shadow-2xl flex flex-col justify-between ">
       {/* Logo */}
-      <div>
-        <div className="text-2xl font-bold text-white mb-8 tracking-wide">TaskFlow</div>
-        <ul className="space-y-3">
+      <div className="p-6">
+        <h1 className="text-3xl font-bold mb-10 tracking-wide text-center">
+          TaskFlow
+        </h1>
+
+        {/* Navigation */}
+        <ul className="space-y-2">
           {menuItems.map((item) => (
             <li
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`p-3 rounded-xl cursor-pointer transition-all ${
+              className={`p-3 rounded-lg cursor-pointer transition-all duration-300 ${
                 location.pathname === item.path
-                  ? "bg-gradient-to-r from-[#090979] to-[#27AECC] text-white shadow-md"
+                  ? "bg-gradient-to-r from-[#C7E8FF] to-[#9BE0FF] text-[#090979] font-semibold shadow-md"
                   : "hover:bg-white/20 text-white/90"
               }`}
             >
@@ -43,13 +48,16 @@ const Sidebar = () => {
         </ul>
       </div>
 
-      {/* Logout */}
-      <button
-        onClick={handleLogout}
-        className="w-full bg-gradient-to-r from-[#090979] to-[#27AECC] text-white py-2 rounded-xl font-semibold hover:opacity-90 transition"
-      >
-        Logout
-      </button>
+      {/* Logout Button */}
+      <div className="p-6">
+        <Button
+          variant="white"
+          fullWidth
+          onClick={handleLogout}
+         >
+          Logout
+        </Button>
+      </div>
     </div>
   );
 };

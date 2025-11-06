@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { auth, db } from "../firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword,signOut  } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 const SignupForm = ({ onToggle }) => {
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,8 +45,10 @@ const SignupForm = ({ onToggle }) => {
         createdAt: serverTimestamp(),
       });
 
+      await signOut(auth)
+      toast.success("Sucessfully Signed Up !!");
       onToggle();
-      alert("Signup successful!");
+      
       setName("");
       setEmail("");
       setPassword("");

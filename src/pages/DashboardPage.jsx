@@ -1,19 +1,12 @@
 import React from "react";
-import Sidebar from "../components/Sidebar";
+import PageLayout from "./PageLayout";
 import DashboardContent from "../components/DashboardContent";
 
 const DashboardPage = () => {
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-[#89BAFA] to-[#FAB0FF] flex flex-row">
-
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main Content */}
-      <div className="flex-1 p-8 overflow-y-auto bg-white/90 backdrop-blur-md  shadow-inner">
-        <DashboardContent />
-      </div>
-    </div>
+    <PageLayout>
+      <DashboardContent />
+    </PageLayout>
   );
 };
 

@@ -3,6 +3,8 @@ import { auth } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import toast from "react-hot-toast";
+import Button from "./Button";
 
 const LoginForm = ({ onToggle }) => {
   const [email, setEmail] = useState("");
@@ -25,8 +27,8 @@ const LoginForm = ({ onToggle }) => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      toast.success("Logged In ✅")
       navigate("/dashboard");
-      alert("Login successful!");
     } catch (err) {
       console.error("Login error:", err);
       if (err.code === "auth/invalid-email") {
@@ -87,19 +89,22 @@ const LoginForm = ({ onToggle }) => {
           </div>
         </div>
 
-        <a
+        {/* <a
           href="#"
           className="text-sm text-blue-500 block mb-4 hover:underline"
         >
           Forgot password?
-        </a>
+        </a> */}
 
-        <button
+        <Button
+          variant="primary"
+          fullWidth
+          loading={loading}
           type="submit"
-          className="w-full text-white py-2 rounded-xl font-semibold bg-gradient-to-r from-[#090979] to-[#27AECC] hover:opacity-90 transition"
         >
           {loading ? "Logging in..." : "Login"}
-        </button>
+        </Button>
+
       </form>
 
       {error && (

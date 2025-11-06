@@ -38,7 +38,7 @@ const DashboardContent = () => {
         Welcome back! Here’s your dashboard overview.
       </p>
 
-      <div className="mt-8 bg-white shadow-md rounded-2xl p-6">
+      <div className="mt-8 shadow-md rounded-2xl p-6">
         <h2 className="text-xl font-semibold text-gray-700 mb-4">My Tasks</h2>
         <p className="text-gray-500">Task list will appear here soon...</p>
       </div>

@@ -1,24 +1,29 @@
 import React, { useState } from "react";
 import { auth, db } from "../firebase";
-import { createUserWithEmailAndPassword,signOut  } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { FiEye, FiEyeOff } from "react-icons/fi";
 import toast from "react-hot-toast";
+import InputField from "./InputField";
 
 const SignupForm = ({ onToggle }) => {
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
+
+    const { name, email, password, confirmPassword } = form;
 
     if (!name || !email || !password || !confirmPassword) {
       setError("Please fill in all fields.");
@@ -32,11 +37,7 @@ const SignupForm = ({ onToggle }) => {
 
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       await setDoc(doc(db, "users", user.uid), {
@@ -45,14 +46,9 @@ const SignupForm = ({ onToggle }) => {
         createdAt: serverTimestamp(),
       });
 
-      await signOut(auth)
-      toast.success("Sucessfully Signed Up !!");
+      toast.success("Successfully Signed Up!");
       onToggle();
-      
-      setName("");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
+      setForm({ name: "", email: "", password: "", confirmPassword: "" });
     } catch (err) {
       console.error("Signup error:", err);
       switch (err.code) {
@@ -93,58 +89,40 @@ const SignupForm = ({ onToggle }) => {
       </div>
 
       <form onSubmit={handleSignup}>
-        <input
+        <InputField
+          label="Full Name"
           type="text"
-          placeholder="Full Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          required
         />
-        <input
+        <InputField
+          label="Email Address"
           type="email"
-          placeholder="Email Address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          required
         />
-
-        {/* Password Field */}
-        <div className="relative mb-3">
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <div
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-2.5 cursor-pointer text-gray-500"
-          >
-            {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
-          </div>
-        </div>
-
-        {/* Confirm Password Field */}
-        <div className="relative mb-4">
-          <input
-            type={showConfirmPassword ? "text" : "password"}
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <div
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-2.5 cursor-pointer text-gray-500"
-          >
-            {showConfirmPassword ? (
-              <FiEyeOff size={20} />
-            ) : (
-              <FiEye size={20} />
-            )}
-          </div>
-        </div>
+        <InputField
+          label="Password"
+          type="password"
+          name="password"
+          value={form.password}
+          onChange={handleChange}
+          required
+          showToggle
+        />
+        <InputField
+          label="Confirm Password"
+          type="password"
+          name="confirmPassword"
+          value={form.confirmPassword}
+          onChange={handleChange}
+          required
+          showToggle
+        />
 
         <button
           type="submit"
@@ -154,9 +132,7 @@ const SignupForm = ({ onToggle }) => {
         </button>
       </form>
 
-      {error && (
-        <p className="text-red-500 text-sm mt-3 text-center">{error}</p>
-      )}
+      {error && <p className="text-red-500 text-sm mt-3 text-center">{error}</p>}
 
       <p className="text-center text-sm mt-4">
         Already a member?{" "}
@@ -172,3 +148,4 @@ const SignupForm = ({ onToggle }) => {
 };
 
 export default SignupForm;
+

@@ -2,16 +2,15 @@ import React, { useState } from "react";
 import { auth } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { FiEye, FiEyeOff } from "react-icons/fi";
 import toast from "react-hot-toast";
 import Button from "./Button";
+import InputField from "./InputField";
 
 const LoginForm = ({ onToggle }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -27,7 +26,7 @@ const LoginForm = ({ onToggle }) => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast.success("Logged In ✅")
+      toast.success("Logged In ✅");
       navigate("/dashboard");
     } catch (err) {
       console.error("Login error:", err);
@@ -64,37 +63,24 @@ const LoginForm = ({ onToggle }) => {
       </div>
 
       <form onSubmit={handleLogin}>
-        <input
+        <InputField
+          label="Email"
           type="email"
-          placeholder="Email Address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          required
+          error={error.includes("email") ? error : ""}
         />
 
-        {/* Password field with eye toggle */}
-        <div className="relative mb-3">
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <div
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-2.5 cursor-pointer text-gray-500"
-          >
-            {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
-          </div>
-        </div>
-
-        {/* <a
-          href="#"
-          className="text-sm text-blue-500 block mb-4 hover:underline"
-        >
-          Forgot password?
-        </a> */}
+        <InputField
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          showToggle
+          required
+          error={error.includes("password") ? error : ""}
+        />
 
         <Button
           variant="primary"
@@ -104,7 +90,6 @@ const LoginForm = ({ onToggle }) => {
         >
           {loading ? "Logging in..." : "Login"}
         </Button>
-
       </form>
 
       {error && (

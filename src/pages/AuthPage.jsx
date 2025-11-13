@@ -7,12 +7,14 @@ const AuthPage = () => {
   const toggleForm = () => setIsLogin((prev) => !prev);
 
   return (
-    <div className="flex items-center justify-center min-h-screen w-screen bg-gradient-to-r from-[#89BAFA] to-[#FAB0FF] fixed top-0 left-0">
-      {isLogin ? (
-        <LoginForm onToggle={toggleForm} />
-      ) : (
-        <SignupForm onToggle={toggleForm} />
-      )}
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-[#89BAFA] to-[#FAB0FF] px-4 sm:px-6">
+      <div className="w-full max-w-sm sm:max-w-md">
+        {isLogin ? (
+          <LoginForm onToggle={toggleForm} />
+        ) : (
+          <SignupForm onToggle={toggleForm} />
+        )}
+      </div>
     </div>
   );
 };

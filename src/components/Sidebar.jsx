@@ -23,7 +23,16 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="w-64 h-screen bg-gradient-to-b from-[#090979] to-[#27AECC] text-white shadow-2xl flex flex-col justify-between ">
+    <div
+      className="
+        w-64 h-screen 
+        text-white shadow-2xl flex flex-col justify-between
+        sm:bg-gradient-to-b sm:from-[#090979] sm:to-[#27AECC]
+        bg-[linear-gradient(to_bottom,rgba(9,9,121,0.85),rgba(39,174,204,0.85))]
+        backdrop-blur-md
+        transition-all duration-300
+      "
+    >
       {/* Logo */}
       <div className="p-6">
         <h1 className="text-3xl font-bold mb-10 tracking-wide text-center">
@@ -50,11 +59,7 @@ const Sidebar = () => {
 
       {/* Logout Button */}
       <div className="p-6">
-        <Button
-          variant="white"
-          fullWidth
-          onClick={handleLogout}
-         >
+        <Button variant="white" fullWidth onClick={handleLogout}>
           Logout
         </Button>
       </div>

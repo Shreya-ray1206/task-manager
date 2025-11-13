@@ -1,16 +1,21 @@
-# React + Vite
+🧠 Task Manager – React + Firebase + Tailwind
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A responsive task management web app built with React (Vite), Firebase, and Tailwind CSS.
+Users can create, edit, and organize tasks into To Do, In Progress, and Done columns — with drag-and-drop on web and a status dropdown for mobile.
 
-Currently, two official plugins are available:
+🚀 Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Frontend: React + Vite + Tailwind CSS
 
-## React Compiler
+Backend: Firebase (Auth + Firestore)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+UI: Responsive design with reusable components
 
-## Expanding the ESLint configuration
+## 🧩 Reusable Components
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| Component | Description | Key Features |
+|------------|-------------|---------------|
+| **Button.jsx** | Customizable button used across the app. | Variants (primary, icon), responsive, hover animations. |
+| **InputField.jsx** | Reusable input field for forms and tasks. | Supports labels, multiline input, and validation. |
+| **TaskCard.jsx** | Displays each task with status, edit, and delete actions. | Responsive layout, dropdown for status, smooth UI transitions. |
+| **MyTasksBoard.jsx** | Manages and displays task columns. | Drag-and-drop (web), adaptive design for mobile. |

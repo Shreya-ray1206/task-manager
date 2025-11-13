@@ -73,17 +73,20 @@ const SignupForm = ({ onToggle }) => {
   };
 
   return (
-    <div className="w-[360px] bg-white p-8 rounded-2xl shadow-2xl">
-      <h2 className="text-2xl font-bold text-center mb-6">Signup Form</h2>
+    <div className="w-full max-w-sm sm:max-w-md bg-white p-6 sm:p-8 rounded-2xl shadow-2xl mx-auto transform transition-all duration-200 hover:scale-[1.01]">
+      <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">
+        Signup Form
+      </h2>
 
-      <div className="flex mb-6 rounded-xl overflow-hidden border border-gray-200">
+      {/* Toggle Buttons */}
+      <div className="flex flex-row sm:flex-row mb-6 rounded-xl overflow-hidden border border-gray-200">
         <button
           onClick={onToggle}
-          className="flex-1 bg-gray-100 text-gray-700 py-2 hover:bg-gray-200 transition"
+          className="flex-1 bg-gray-100 text-gray-700 py-2.5 sm:py-3 hover:bg-gray-200 transition"
         >
           Login
         </button>
-        <button className="flex-1 bg-gradient-to-r from-[#090979] to-[#27AECC] text-white py-2">
+        <button className="flex-1 bg-gradient-to-r from-[#090979] to-[#27AECC] text-white py-2.5 sm:py-3">
           Signup
         </button>
       </div>
@@ -126,15 +129,17 @@ const SignupForm = ({ onToggle }) => {
 
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-[#090979] to-[#27AECC] text-white py-2 rounded-xl hover:opacity-90 transition"
+          className="w-full bg-gradient-to-r from-[#090979] to-[#27AECC] text-white py-2.5 sm:py-3 rounded-xl text-sm sm:text-base hover:opacity-90 transition"
         >
           {loading ? "Signing up..." : "Signup"}
         </button>
       </form>
 
-      {error && <p className="text-red-500 text-sm mt-3 text-center">{error}</p>}
+      {error && (
+        <p className="text-red-500 text-sm mt-3 text-center">{error}</p>
+      )}
 
-      <p className="text-center text-sm mt-4">
+      <p className="text-center text-xs sm:text-sm mt-4">
         Already a member?{" "}
         <span
           onClick={onToggle}
@@ -148,4 +153,5 @@ const SignupForm = ({ onToggle }) => {
 };
 
 export default SignupForm;
+
 

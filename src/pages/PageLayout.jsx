@@ -1,15 +1,34 @@
-import React from "react";
+import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 
 const PageLayout = ({ children }) => {
-  return (
-    <div className="h-screen w-full bg-gradient-to-br from-[#89BAFA] to-[#FAB0FF] flex flex-row overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar />
+  const [showSidebar, setShowSidebar] = useState(false);
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto bg-white/60 backdrop-blur-xl shadow-inner">
-        <div className="flex-1 overflow-y-auto px-8 py-6">{children}</div>
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#89BAFA] to-[#FAB0FF] flex flex-col sm:flex-row overflow-y-auto">
+      {/* Mobile Navbar */}
+      <header className="flex items-center justify-between p-4 bg-white/30 backdrop-blur-md sm:hidden">
+        <h1 className="text-xl font-bold text-indigo-700">TaskFlow</h1>
+        <button
+          onClick={() => setShowSidebar(!showSidebar)}
+          className="p-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
+        >
+          ☰
+        </button>
+      </header>
+
+      {/* Sidebar - hidden on mobile */}
+      <aside
+        className={`${
+          showSidebar ? "translate-x-0" : "-translate-x-full"
+        } sm:translate-x-0 fixed sm:static top-0 left-0 z-40 sm:z-auto h-full sm:h-auto w-64 sm:w-60 bg-white/70 backdrop-blur-md shadow-lg transition-transform duration-300`}
+      >
+        <Sidebar />
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto bg-white/60 backdrop-blur-xl shadow-inner p-4 sm:p-8 rounded-t-2xl sm:rounded-none mt-2 sm:mt-0">
+        {children}
       </div>
     </div>
   );

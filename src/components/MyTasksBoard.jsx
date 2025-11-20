@@ -13,26 +13,22 @@ import {
   where,
   onSnapshot,
 } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
 import Button from "./Button";
+import { useAuth } from "../context/AuthContext.jsx";
+
 
 const MyTasksBoard = () => {
   const [newTask, setNewTask] = useState({ title: "", description: "", priority: "medium" });
   const [tasks, setTasks] = useState([]);
-  const [user, setUser] = useState(null);
+  // const [user, setUser] = useState(null);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [draggedTaskId, setDraggedTaskId] = useState(null);
+  const {user} = useAuth()
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        listenToTasks(currentUser.uid);
-      } else {
-        toast.error("Please log in to view tasks.");
-      }
-    });
-    return () => unsub();
+    if (user) {
+     listenToTasks(user.uid);
+    }
   }, []);
 
   const listenToTasks = (userId) => {

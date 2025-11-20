@@ -1,26 +1,57 @@
 import "./App.css";
-import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebase";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import MyTasksPage from "./pages/MyTasksPage";
 import { Toaster } from "react-hot-toast";
+import { useAuth } from "./context/AuthContext";
+import { messaging } from "./firebase";
+import { getToken, onMessage } from "firebase/messaging";
+import { useEffect } from "react";
+import toast from "react-hot-toast";
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-      console.log(currentUser ? "User logged in" : "No user logged in");
+   useEffect(() => {
+    if (!user) return; // only after login
+
+    const requestPermission = async () => {
+      console.log("⏳ Asking for notification permission...");
+      
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        console.log("❌ Notifications blocked by user");
+        return;
+      }
+
+      // Get FCM Token
+      try {
+        const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+
+        const token = await getToken(messaging, { vapidKey });
+
+        if (token) {
+          console.log("✅ FCM Token:", token);
+          toast.success("Notifications enabled!");
+        } else {
+          console.log("⚠️ No token generated");
+        }
+
+      } catch (error) {
+        console.error("Token Error:", error);
+      }
+    };
+
+    requestPermission();
+
+    // Listen for foreground messages
+    onMessage(messaging, (payload) => {
+      console.log("📩 FCM Message Received:", payload);
+      toast(payload.notification?.title || "New Notification");
     });
 
-    return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   if (loading) return <div className="text-center mt-20">Loading...</div>;
 
@@ -37,27 +68,13 @@ function App() {
             borderRadius: "10px",
             boxShadow: "0px 3px 10px rgba(0,0,0,0.1)",
           },
-          success: {
-            iconTheme: { primary: "#27AECC", secondary: "#fff" },
-          },
-          error: {
-            iconTheme: { primary: "#e63946", secondary: "#fff" },
-          },
         }}
       />
+
       <Routes>
-        <Route
-          path="/"
-          element={user ? <Navigate to="/dashboard" /> : <AuthPage />}
-        />
-        <Route
-          path="/dashboard"
-          element={user ? <DashboardPage /> : <Navigate to="/" />}
-        />
-        <Route
-          path="/my-tasks"
-          element={user ? <MyTasksPage /> : <Navigate to="/" />}
-        />
+        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <AuthPage />} />
+        <Route path="/dashboard" element={user ? <DashboardPage /> : <Navigate to="/" />} />
+        <Route path="/my-tasks" element={user ? <MyTasksPage /> : <Navigate to="/" />} />
       </Routes>
     </Router>
   );

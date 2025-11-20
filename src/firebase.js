@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 // Only import Analytics in production
 let analytics;
@@ -16,8 +17,36 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
+// Firebase services
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// 🔥 Add Messaging
+const messaging = getMessaging(app);
+
+// Request permission & get token
+export const requestFCMToken = async () => {
+  try {
+    const currentToken = await getToken(messaging, {
+      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,  // 👈 Your VAPID KEY here
+    });
+
+    if (currentToken) {
+      console.log("FCM Token:", currentToken);
+      return currentToken;
+    } else {
+      console.warn("No registration token available.");
+    }
+  } catch (err) {
+    console.error("An error occurred while retrieving token.", err);
+  }
+};
+
+// Listen for foreground messages
+onMessage(messaging, (payload) => {
+  console.log("Message received in foreground:", payload);
+});
 
 // Initialize Analytics only in production
 if (import.meta.env.MODE === "production") {
@@ -25,5 +54,6 @@ if (import.meta.env.MODE === "production") {
   // analytics = getAnalytics(app);
 }
 
-export { app, analytics, auth, db };
+export { app, analytics, auth, db, messaging };
+
 

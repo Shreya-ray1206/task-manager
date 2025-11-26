@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { auth, db } from "../firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import toast from "react-hot-toast";
 import InputField from "./InputField";
+import { firebaseErrorToMessage } from "../utils/error";
 
 const SignupForm = ({ onToggle }) => {
   const [form, setForm] = useState({
@@ -12,146 +13,96 @@ const SignupForm = ({ onToggle }) => {
     password: "",
     confirmPassword: "",
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  const handleChange = (e) => {
+  const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  const change = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const rules = {
+    name: (v) => {
+      if (v.trim().length < 3) return "Name must be at least 3 characters.";
+      if (!v.includes(" ")) return "Enter full name (first + last).";
+      return "";
+    },
+    email: (v) => {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailPattern.test(v) ? "" : "Invalid email.";
+    },
+    password: (v) => {
+      const rule = /^(?=.*[A-Z])(?=.*[!@#$%^&*]).{6,}$/;
+      return rule.test(v)
+        ? ""
+        : "At least 6 characters, 1 uppercase, 1 special character.";
+    },
+    confirmPassword: (v) =>
+      v !== form.password ? "Passwords do not match." : "",
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setError("");
+    setSubmitError("");
 
-    const { name, email, password, confirmPassword } = form;
+    const validationFailed = Object.keys(rules).some(
+      (f) => rules[f](form[f]) !== ""
+    );
 
-    if (!name || !email || !password || !confirmPassword) {
-      setError("Please fill in all fields.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+    if (validationFailed) return;
 
     setLoading(true);
+
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      const userCred = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      const user = userCred.user;
 
       await setDoc(doc(db, "users", user.uid), {
-        fullName: name,
-        email: user.email,
+        fullName: form.name,
+        email: form.email,
         createdAt: serverTimestamp(),
       });
 
-      toast.success("Successfully Signed Up!");
-      onToggle();
+      await sendEmailVerification(user);
+      await auth.signOut();
+
+      toast.success("Verification email sent. Check your inbox.");
+      setTimeout(onToggle, 300);
+
       setForm({ name: "", email: "", password: "", confirmPassword: "" });
     } catch (err) {
-      console.error("Signup error:", err);
-      switch (err.code) {
-        case "auth/invalid-email":
-          setError("Please enter a valid email address.");
-          break;
-        case "auth/email-already-in-use":
-          setError("An account already exists with this email.");
-          break;
-        case "auth/weak-password":
-          setError("Password should be at least 6 characters long.");
-          break;
-        case "auth/network-request-failed":
-          setError("Network error — please check your internet connection.");
-          break;
-        default:
-          setError("Something went wrong. Please try again.");
-      }
+      setSubmitError(firebaseErrorToMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-sm sm:max-w-md bg-white p-6 sm:p-8 rounded-2xl shadow-2xl mx-auto transform transition-all duration-200 hover:scale-[1.01]">
-      <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">
-        Signup Form
-      </h2>
+    <div className="w-full max-w-sm sm:max-w-md bg-white p-6 sm:p-8 rounded-2xl shadow-2xl mx-auto">
+      <h2 className="text-xl sm:text-2xl font-bold text-center mb-4">Signup Form</h2>
 
-      {/* Toggle Buttons */}
-      <div className="flex flex-row sm:flex-row mb-6 rounded-xl overflow-hidden border border-gray-200">
-        <button
-          onClick={onToggle}
-          className="flex-1 bg-gray-100 text-gray-700 py-2.5 sm:py-3 hover:bg-gray-200 transition"
-        >
-          Login
-        </button>
-        <button className="flex-1 bg-gradient-to-r from-[#090979] to-[#27AECC] text-white py-2.5 sm:py-3">
-          Signup
-        </button>
+      <div className="flex flex-row mb-6 rounded-xl overflow-hidden border border-gray-200">
+        <button onClick={onToggle} className="flex-1 bg-gray-100 text-gray-700 py-3">Login</button>
+        <button className="flex-1 bg-gradient-to-r from-[#090979] to-[#27AECC] text-white py-3">Signup</button>
       </div>
 
       <form onSubmit={handleSignup}>
-        <InputField
-          label="Full Name"
-          type="text"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          required
-        />
-        <InputField
-          label="Email Address"
-          type="email"
-          name="email"
-          value={form.email}
-          onChange={handleChange}
-          required
-        />
-        <InputField
-          label="Password"
-          type="password"
-          name="password"
-          value={form.password}
-          onChange={handleChange}
-          required
-          showToggle
-        />
-        <InputField
-          label="Confirm Password"
-          type="password"
-          name="confirmPassword"
-          value={form.confirmPassword}
-          onChange={handleChange}
-          required
-          showToggle
-        />
+        <InputField label="Full Name" name="name" value={form.name} onChange={change} validate={rules.name} />
 
-        <button
-          type="submit"
-          className="w-full bg-gradient-to-r from-[#090979] to-[#27AECC] text-white py-2.5 sm:py-3 rounded-xl text-sm sm:text-base hover:opacity-90 transition"
-        >
+        <InputField label="Email Address" name="email" value={form.email} onChange={change} validate={rules.email} />
+
+        <InputField type="password" showToggle label="Password" name="password" value={form.password} onChange={change} validate={rules.password} />
+
+        <InputField type="password" showToggle label="Confirm Password" name="confirmPassword" value={form.confirmPassword} onChange={change} validate={rules.confirmPassword} />
+
+        <button type="submit" className="w-full bg-gradient-to-r from-[#090979] to-[#27AECC] text-white py-3 rounded-xl mt-3">
           {loading ? "Signing up..." : "Signup"}
         </button>
       </form>
 
-      {error && (
-        <p className="text-red-500 text-sm mt-3 text-center">{error}</p>
-      )}
-
-      <p className="text-center text-xs sm:text-sm mt-4">
-        Already a member?{" "}
-        <span
-          onClick={onToggle}
-          className="text-blue-500 cursor-pointer hover:underline"
-        >
-          Login now
-        </span>
-      </p>
+      {submitError && <p className="text-red-500 text-sm mt-3 text-center">{submitError}</p>}
     </div>
   );
 };
 
 export default SignupForm;
-
-

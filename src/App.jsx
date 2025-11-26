@@ -72,10 +72,32 @@ function App() {
       />
 
       <Routes>
-        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <AuthPage />} />
-        <Route path="/dashboard" element={user ? <DashboardPage /> : <Navigate to="/" />} />
-        <Route path="/my-tasks" element={user ? <MyTasksPage /> : <Navigate to="/" />} />
-      </Routes>
+  {/* If no user → show login/signup */}
+  {!user && (
+    <Route path="/" element={<AuthPage />} />
+  )}
+
+  {/* If logged in but NOT verified → send back to login */}
+  {user && !user.emailVerified && (
+    <>
+      <Route path="/" element={<AuthPage />} />
+      <Route path="*" element={<Navigate to="/" />} />
+    </>
+  )}
+
+  {/* If verified user → allow dashboard */}
+  {user && user.emailVerified && (
+    <>
+      <Route path="/" element={<Navigate to="/dashboard" />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/my-tasks" element={<MyTasksPage />} />
+    </>
+  )}
+
+  {/* Catch all unknown routes */}
+  <Route path="*" element={<Navigate to="/" />} />
+</Routes>
+
     </Router>
   );
 }

@@ -3,10 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { TaskProvider } from "./context/TaskContext.jsx";
 
-
-
-// ✅ Register Service Worker HERE
+// Register Service Worker
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
     .register("/firebase-messaging-sw.js")
@@ -15,9 +14,11 @@ if ("serviceWorker" in navigator) {
 }
 
 createRoot(document.getElementById('root')).render(
- <StrictMode>
+  <StrictMode>
     <AuthProvider>
-      <App />
+      <TaskProvider>
+        <App />
+      </TaskProvider>
     </AuthProvider>
   </StrictMode>
-)
+);

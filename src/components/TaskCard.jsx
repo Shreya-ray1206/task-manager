@@ -13,13 +13,33 @@ const statusOptions = [
   { value: "done", label: "Done" },
 ];
 
+// ⭐ Clean timestamp formatter
+const formatDate = (ts) => {
+  if (!ts) return "";
+  const d = ts.toDate();
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 const priorityStyles = {
   high: { color: "bg-red-50 border-red-200" },
   medium: { color: "bg-yellow-50 border-yellow-200" },
   low: { color: "bg-green-50 border-green-200" },
 };
 
-const TaskCard = ({ task, onEdit, onDelete, isEditing, onSaveEdit, onCancelEdit }) => {
+const TaskCard = ({
+  task,
+  onEdit,
+  onDelete,
+  isEditing,
+  onSaveEdit,
+  onCancelEdit,
+}) => {
+
   const [editValues, setEditValues] = useState({
     title: task.title || "",
     description: task.description || "",
@@ -51,6 +71,7 @@ const TaskCard = ({ task, onEdit, onDelete, isEditing, onSaveEdit, onCancelEdit 
         status: editValues.status,
         updatedAt: serverTimestamp(),
       });
+
       toast.success("Task updated!");
       onSaveEdit(task.id, editValues);
     } catch {
@@ -62,13 +83,17 @@ const TaskCard = ({ task, onEdit, onDelete, isEditing, onSaveEdit, onCancelEdit 
 
   return (
     <div className={`relative border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 ${priority.color}`}>
+      
       {isEditing ? (
+        /* ------------------- EDIT MODE ------------------- */
         <div className="p-3 flex flex-col gap-2">
           <InputField
             label="Title"
             name="title"
             value={editValues.title}
-            onChange={(e) => setEditValues({ ...editValues, title: e.target.value })}
+            onChange={(e) =>
+              setEditValues({ ...editValues, title: e.target.value })
+            }
             required
             size="sm"
           />
@@ -79,17 +104,20 @@ const TaskCard = ({ task, onEdit, onDelete, isEditing, onSaveEdit, onCancelEdit 
             multiline
             rows={2}
             value={editValues.description}
-            onChange={(e) => setEditValues({ ...editValues, description: e.target.value })}
+            onChange={(e) =>
+              setEditValues({ ...editValues, description: e.target.value })
+            }
             required
             size="sm"
           />
 
-          {/* Status dropdown only in edit mode */}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-gray-700">Status</label>
             <select
               value={editValues.status}
-              onChange={(e) => setEditValues({ ...editValues, status: e.target.value })}
+              onChange={(e) =>
+                setEditValues({ ...editValues, status: e.target.value })
+              }
               className="text-xs sm:text-sm font-medium rounded-md px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 focus:outline-none"
             >
               {statusOptions.map((opt) => (
@@ -100,15 +128,15 @@ const TaskCard = ({ task, onEdit, onDelete, isEditing, onSaveEdit, onCancelEdit 
             </select>
           </div>
 
-          {/* Save / Cancel */}
           <div className="flex justify-end gap-2 mt-2">
             <Button variant="icon" size="sm" icon={<FiCheck size={14} />} onClick={handleSave} />
             <Button variant="icon" size="sm" icon={<FiX size={14} />} onClick={onCancelEdit} />
           </div>
         </div>
+
       ) : (
+        /* ------------------- VIEW MODE ------------------- */
         <>
-          {/* Title + Edit/Delete (space-between) */}
           <div className="flex justify-between items-center px-3 pt-2">
             <h4
               className="text-sm sm:text-base font-semibold text-gray-900 flex-1 break-words"
@@ -123,13 +151,20 @@ const TaskCard = ({ task, onEdit, onDelete, isEditing, onSaveEdit, onCancelEdit 
             </div>
           </div>
 
-          {/* Divider */}
           <div className="border-t border-gray-100 mx-3 my-1"></div>
 
-          {/* Description */}
-          <div className="px-3 pb-3 text-xs sm:text-sm text-gray-700 leading-snug min-h-[40px]">
-            {task.description ? task.description : (
+          <div className="px-3 text-xs sm:text-sm text-gray-700 leading-snug min-h-[40px] pb-2">
+            {task.description || (
               <span className="italic text-gray-400">No description</span>
+            )}
+          </div>
+
+          {/* ⭐ Show ONLY one timestamp */}
+          <div className="px-3 pb-2 text-[10px] text-gray-500 text-right">
+            {task.updatedAt ? (
+              <span>Updated: {formatDate(task.updatedAt)}</span>
+            ) : (
+              <span>Created: {formatDate(task.createdAt)}</span>
             )}
           </div>
         </>

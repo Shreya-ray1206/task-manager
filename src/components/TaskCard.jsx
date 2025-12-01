@@ -5,7 +5,7 @@ import Button from "./Button";
 import InputField from "./InputField";
 import { db } from "../firebase";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../context/AuthProvider.jsx";
 
 const statusOptions = [
   { value: "todo", label: "To Do" },

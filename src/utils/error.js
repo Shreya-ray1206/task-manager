@@ -1,7 +1,7 @@
 export const firebaseErrorToMessage = (err) => {
   if (!err || !err.code) return "Something went wrong.";
 
-  switch (err.code) {
+  switch (err.code) { 
     case "auth/invalid-email":
       return "Invalid email address.";
 

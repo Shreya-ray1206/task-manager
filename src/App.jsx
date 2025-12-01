@@ -4,7 +4,7 @@ import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import MyTasksPage from "./pages/MyTasksPage";
 import { Toaster } from "react-hot-toast";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/AuthProvider";
 import { messaging } from "./firebase";
 import { getToken, onMessage } from "firebase/messaging";
 import { useEffect } from "react";

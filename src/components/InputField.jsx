@@ -18,6 +18,9 @@ const InputField = ({
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState("");
 
+  // 👇 GENERATE UNIQUE id for accessibility + testing
+  const id = name || label.replace(/\s+/g, "-").toLowerCase();
+
   useEffect(() => {
     if (touched && validate) {
       setError(validate(value));
@@ -32,23 +35,36 @@ const InputField = ({
   const isPassword = type === "password";
   const currentType = isPassword ? (showPassword ? "text" : "password") : type;
 
-  const sizePadding = size === "sm" ? "px-2 py-1.5 text-sm pt-4" : "px-3 py-2.5 text-sm pt-5";
+  const sizePadding =
+    size === "sm"
+      ? "px-2 py-1.5 text-sm pt-4"
+      : "px-3 py-2.5 text-sm pt-5";
+
   const labelTopShown = size === "sm" ? "top-2.5" : "top-3.5";
 
   const isInverted = variant === "inverted";
-  const inputBg = isInverted ? "bg-transparent text-white placeholder-white/60" : "bg-white text-gray-900";
-  const borderColor = isInverted ? "border-white/30 focus:ring-white/40" : "border-gray-300 focus:ring-[#27AECC]";
-  const labelTextColor = isInverted ? "text-white/90" : "text-gray-500";
+  const inputBg = isInverted
+    ? "bg-transparent text-white placeholder-white/60"
+    : "bg-white text-gray-900";
+
+  const borderColor = isInverted
+    ? "border-white/30 focus:ring-white/40"
+    : "border-gray-300 focus:ring-[#27AECC]";
+
+  const labelTextColor = isInverted
+    ? "text-white/90"
+    : "text-gray-500";
 
   return (
     <div className={clsx("relative flex flex-col w-full mb-3", className)}>
       <input
+        id={id}               // 👈 important
         name={name}
         type={currentType}
         value={value}
         onChange={onChange}
         onBlur={handleBlur}
-        placeholder=" "
+        placeholder=" "       // 👈 still blank for floating UX
         required={required}
         className={clsx(
           "peer w-full border rounded-md outline-none transition-all",
@@ -62,6 +78,7 @@ const InputField = ({
 
       {label && (
         <label
+          htmlFor={id}         // 👈 important
           className={clsx(
             "absolute left-2 px-1 transition-all duration-150 pointer-events-none",
             labelTextColor,
@@ -87,7 +104,9 @@ const InputField = ({
         </div>
       )}
 
-      {touched && error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {touched && error && (
+        <p className="text-red-500 text-xs mt-1">{error}</p>
+      )}
     </div>
   );
 };

@@ -14,7 +14,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import Button from "./Button";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../context/AuthProvider.jsx";
 
 
 const MyTasksBoard = () => {

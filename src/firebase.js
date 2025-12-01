@@ -19,34 +19,37 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Firebase services
-const auth = getAuth(app);
-const db = getFirestore(app);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
 
-// 🔥 Add Messaging
-const messaging = getMessaging(app);
+// ---------------------------------------------
+// 🚫 DISABLE FIREBASE MESSAGING IN TEST MODE
+// ---------------------------------------------
+let messaging = null;
 
-// Request permission & get token
-export const requestFCMToken = async () => {
+if (import.meta.env.MODE !== "test") {
   try {
-    const currentToken = await getToken(messaging, {
-      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,  // 👈 Your VAPID KEY here
+    messaging = getMessaging(app);
+
+    // Request token only in real browser, not in test
+    getToken(messaging, {
+      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+    }).then((token) => {
+      if (token) console.log("FCM Token:", token);
+      else console.warn("No registration token available.");
     });
 
-    if (currentToken) {
-      console.log("FCM Token:", currentToken);
-      return currentToken;
-    } else {
-      console.warn("No registration token available.");
-    }
-  } catch (err) {
-    console.error("An error occurred while retrieving token.", err);
-  }
-};
+    // Foreground notifications
+    onMessage(messaging, (payload) => {
+      console.log("Message received in foreground:", payload);
+    });
 
-// Listen for foreground messages
-onMessage(messaging, (payload) => {
-  console.log("Message received in foreground:", payload);
-});
+  } catch (err) {
+    console.warn("Messaging disabled due to unsupported environment.", err);
+  }
+} else {
+  console.warn("🔥 Firebase Messaging skipped in Vitest.");
+}
 
 // Initialize Analytics only in production
 if (import.meta.env.MODE === "production") {
@@ -54,6 +57,4 @@ if (import.meta.env.MODE === "production") {
   // analytics = getAnalytics(app);
 }
 
-export { app, analytics, auth, db, messaging };
-
-
+export { app, analytics, messaging };

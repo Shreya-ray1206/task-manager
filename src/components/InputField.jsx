@@ -18,7 +18,7 @@ const InputField = ({
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState("");
 
-  // 👇 GENERATE UNIQUE id for accessibility + testing
+  // unique id for label/input
   const id = name || label.replace(/\s+/g, "-").toLowerCase();
 
   useEffect(() => {
@@ -58,13 +58,13 @@ const InputField = ({
   return (
     <div className={clsx("relative flex flex-col w-full mb-3", className)}>
       <input
-        id={id}               // 👈 important
+        id={id}
         name={name}
         type={currentType}
         value={value}
         onChange={onChange}
         onBlur={handleBlur}
-        placeholder=" "       // 👈 still blank for floating UX
+        placeholder=" "
         required={required}
         className={clsx(
           "peer w-full border rounded-md outline-none transition-all",
@@ -78,7 +78,7 @@ const InputField = ({
 
       {label && (
         <label
-          htmlFor={id}         // 👈 important
+          htmlFor={id}
           className={clsx(
             "absolute left-2 px-1 transition-all duration-150 pointer-events-none",
             labelTextColor,
@@ -93,6 +93,8 @@ const InputField = ({
 
       {isPassword && (
         <div
+          role="button"             // ✅ TEST FIX
+          tabIndex={0}              // optional accessibility
           onClick={() => setShowPassword(!showPassword)}
           className={clsx(
             "absolute right-2 cursor-pointer select-none",

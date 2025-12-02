@@ -263,15 +263,6 @@ Your Name - [@yourusername](https://twitter.com/yourusername) - email@example.co
 
 Project Link: [https://github.com/yourusername/task-manager](https://github.com/yourusername/task-manager)
 
-## 🎯 Roadmap
-- [ ] Add team collaboration features
-- [ ] Implement calendar view
-- [ ] Add task categories and tags
-- [ ] Export tasks to PDF/CSV
-- [ ] Mobile app (React Native)
-- [ ] Dark mode toggle
-- [ ] Task reminders and notifications
-
 ## ⭐ Show your support
 Give a ⭐️ if this project helped you!
 

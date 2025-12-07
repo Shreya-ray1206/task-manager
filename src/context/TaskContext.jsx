@@ -4,9 +4,7 @@ import { useAuth } from "./AuthProvider";
 import {
   collection,
   query,
-  where,
   orderBy,
-  limit,
   onSnapshot
 } from "firebase/firestore";
 
@@ -17,61 +15,50 @@ export const TaskProvider = ({ children }) => {
   const { user } = useAuth();
 
   const [tasks, setTasks] = useState([]);
-  const [recentTasks, setRecentTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
+      console.log("❌ No user logged in — clearing tasks");
       setTasks([]);
-      setRecentTasks([]);
       setLoading(false);
       return;
     }
 
+    console.log("👤 User logged in:", user.uid);
+
     const ref = collection(db, "users", user.uid, "tasks");
 
-    // 👉 Listen to ALL tasks (real-time)
-    const q = query(ref, where("deleted", "==", false));
-    const unsubscribeAll = onSnapshot(q, (snap) => {
-      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setTasks(data);
-    });
+    // 👉 Fetch ALL tasks (deleted or not)
+    const q = query(ref, orderBy("updatedAt", "desc"));
 
-    // 👉 Listen to the 3 most recent tasks
-    const recentQ = query(
-      ref,
-      where("deleted", "==", false),
-      orderBy("updatedAt", "desc"),
-      limit(3)
-    );
-    const unsubscribeRecent = onSnapshot(recentQ, (snap) => {
-      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setRecentTasks(data);
+    const unsub = onSnapshot(q, (snap) => {
+      const arr = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+      console.log("🔥 Firestore returned tasks:", arr.length);
+      arr.forEach((task, i) => {
+        console.log(
+          `#${i + 1}`,
+          {
+            id: task.id,
+            title: task.title,
+            status: task.status,
+            deleted: task.deleted,
+            createdAt: task.createdAt?.toDate?.(),
+            updatedAt: task.updatedAt?.toDate?.(),
+          }
+        );
+      });
+
+      setTasks(arr);
       setLoading(false);
     });
 
-    return () => {
-      unsubscribeAll();
-      unsubscribeRecent();
-    };
+    return () => unsub();
   }, [user]);
 
-  // Derived (computed) data
-  const tasksByStatus = {
-    todo: tasks.filter((t) => t.status === "todo"),
-    inProgress: tasks.filter((t) => t.status === "inProgress"),
-    done: tasks.filter((t) => t.status === "done"),
-  };
-
   return (
-    <TaskContext.Provider
-      value={{
-        loading,
-        tasks,
-        recentTasks,
-        tasksByStatus,
-      }}
-    >
+    <TaskContext.Provider value={{ loading, tasks }}>
       {children}
     </TaskContext.Provider>
   );

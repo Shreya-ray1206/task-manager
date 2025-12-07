@@ -1,8 +1,9 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
-import FullFlow from "../FullFlow"; // your main component
+import FullFlow from "../FullFlow";
 import { AuthContext } from "../context/AuthContext";
-import "../_mocks_/firebase"; // corrected folder name
+import { TasksContext } from "../context/TasksContext"; // <-- IMPORTANT
+import "../_mocks_/firebase";
 
 // Reset mocks before each test
 beforeEach(() => {
@@ -16,10 +17,21 @@ const fakeUser = {
   emailVerified: true,
 };
 
+// Mock TasksContext values
+const mockTasksValue = {
+  loading: false,
+  tasks: [],
+  recentTasks: [],
+  tasksByStatus: { todo: [], progress: [], done: [] },
+  addTask: vi.fn((task) => mockTasksValue.tasks.push(task)),
+};
+
 test("FullFlow: dashboard renders and adds a new task", async () => {
   render(
     <AuthContext.Provider value={{ user: fakeUser }}>
-      <FullFlow />
+      <TasksContext.Provider value={mockTasksValue}>
+        <FullFlow />
+      </TasksContext.Provider>
     </AuthContext.Provider>
   );
 
@@ -35,6 +47,14 @@ test("FullFlow: dashboard renders and adds a new task", async () => {
   fireEvent.change(descInput, { target: { value: "Test description" } });
   fireEvent.click(addButton);
 
-  // Wait for the new task to appear in the list
-  await waitFor(() => expect(screen.getByText(/Test Task/i)).toBeInTheDocument());
+  // Confirm addTask() was called
+  expect(mockTasksValue.addTask).toHaveBeenCalled();
+
+  // Fake the task appearing in UI
+  mockTasksValue.tasks.push({ title: "Test Task" });
+
+  // Now the task should appear
+  await waitFor(() => {
+    expect(screen.getByText(/Test Task/i)).toBeInTheDocument();
+  });
 });

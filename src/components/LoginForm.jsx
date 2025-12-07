@@ -68,15 +68,6 @@ const LoginForm = ({ onToggle }) => {
         return;
       }
 
-      // Firebase throws this when user exists but is unverified
-      if (
-        err.code === "auth/invalid-credential" ||
-        err.code === "auth/invalid-login"
-      ) {
-        setError("Your email is not verified. Check your inbox.");
-        return;
-      }
-
       setError(firebaseErrorToMessage(err));
     } finally {
       setLoading(false);

@@ -142,7 +142,7 @@ users/{userId}/tasks/{taskId}:
 
 ### Dashboard
 - **Task Statistics**: Total, completed, and in-progress counts
-- **Recent Tasks**: View recently updated tasks
+- **Recent Tasks**: View recently updated tasks, lastest top 3 
 - **Visual Analytics**: Gradient cards with progress indicators
 
 ### User Interface
@@ -224,7 +224,7 @@ Run the test suite:
 npm test
 ```
 
-## 📝 API Reference
+
 
 ### Authentication Endpoints
 - `POST /api/login` - User login
@@ -250,7 +250,7 @@ npm test
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 👥 Authors
-- Your Name - Initial work
+- Shreya Ray
 
 ## 🙏 Acknowledgments
 - Firebase team for amazing backend services
@@ -259,7 +259,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - All contributors who helped shape this project
 
 ## 📧 Contact
-Your Name - [@yourusername](https://twitter.com/yourusername) - email@example.com
 
 Project Link: [https://github.com/yourusername/task-manager](https://github.com/yourusername/task-manager)
 

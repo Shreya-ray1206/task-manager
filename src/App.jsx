@@ -13,45 +13,40 @@ import toast from "react-hot-toast";
 function App() {
   const { user, loading } = useAuth();
 
-   useEffect(() => {
-    if (!user) return; // only after login
+  useEffect(() => {
+  if (!user || !messaging) return;
 
-    const requestPermission = async () => {
-      console.log("⏳ Asking for notification permission...");
-      
+  let unsubscribeOnMessage = null;
+
+  const setupNotifications = async () => {
+    try {
       const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        console.log("❌ Notifications blocked by user");
-        return;
+      if (permission !== "granted") return;
+
+      const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+      const token = await getToken(messaging, { vapidKey });
+
+      if (token) {
+        console.log("✅ FCM Token:", token);
       }
 
-      // Get FCM Token
-      try {
-        const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+      // Foreground messages (ONLY toast, no desktop notification)
+      unsubscribeOnMessage = onMessage(messaging, (payload) => {
+        toast(payload.notification?.title || "New Notification");
+      });
 
-        const token = await getToken(messaging, { vapidKey });
+    } catch (err) {
+      console.error("FCM setup error:", err);
+    }
+  };
 
-        if (token) {
-          console.log("✅ FCM Token:", token);
-          toast.success("Notifications enabled!");
-        } else {
-          console.log("⚠️ No token generated");
-        }
+  setupNotifications();
 
-      } catch (error) {
-        console.error("Token Error:", error);
-      }
-    };
+  return () => {
+    if (unsubscribeOnMessage) unsubscribeOnMessage();
+  };
+}, [user]);
 
-    requestPermission();
-
-    // Listen for foreground messages
-    onMessage(messaging, (payload) => {
-      console.log("📩 FCM Message Received:", payload);
-      toast(payload.notification?.title || "New Notification");
-    });
-
-  }, [user]);
 
   if (loading) return <div className="text-center mt-20">Loading...</div>;
 

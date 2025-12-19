@@ -2,13 +2,11 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import InputField from "../components/InputField";
 
-
 describe("InputField Component", () => {
   it("renders the input and label", () => {
     render(<InputField label="Email" value="" onChange={() => {}} />);
 
-    const input = screen.getByLabelText("Email");
-    expect(input).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
   });
 
   it("allows typing inside the input", () => {
@@ -22,8 +20,9 @@ describe("InputField Component", () => {
       />
     );
 
-    const input = screen.getByLabelText("Name");
-    fireEvent.change(input, { target: { value: "John" } });
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "John" },
+    });
 
     expect(handleChange).toHaveBeenCalled();
   });
@@ -42,10 +41,7 @@ describe("InputField Component", () => {
       />
     );
 
-    const input = screen.getByLabelText("Username");
-
-    // blur triggers validation
-    fireEvent.blur(input);
+    fireEvent.blur(screen.getByLabelText("Username"));
 
     expect(screen.getByText("Too short")).toBeInTheDocument();
   });
@@ -57,20 +53,20 @@ describe("InputField Component", () => {
         type="password"
         value="secret"
         onChange={() => {}}
+        showToggle
       />
     );
 
     const input = screen.getByLabelText("Password");
-    const toggle = screen.getByRole("button", { hidden: true });
+    const toggle = screen.getByRole("button", {
+      name: /toggle password visibility/i,
+    });
 
-    // Initially hidden
     expect(input.type).toBe("password");
 
-    // Click to show
     fireEvent.click(toggle);
     expect(input.type).toBe("text");
 
-    // Click to hide again
     fireEvent.click(toggle);
     expect(input.type).toBe("password");
   });

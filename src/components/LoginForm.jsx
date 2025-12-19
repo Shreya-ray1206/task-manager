@@ -3,6 +3,7 @@ import { auth } from "../firebase";
 import {
   signInWithEmailAndPassword,
   sendEmailVerification,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -17,75 +18,115 @@ const LoginForm = ({ onToggle }) => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Email verification resend
   const [unverifiedUser, setUnverifiedUser] = useState(null);
   const [cooldown, setCooldown] = useState(0);
 
+  // Forgot password cooldown
+  const [resetCooldown, setResetCooldown] = useState(0);
+
   const navigate = useNavigate();
 
-  // countdown for resend
+  // -------------------------------
+  // Email verification cooldown
+  // -------------------------------
   useEffect(() => {
     if (cooldown <= 0) return;
-    const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [cooldown]);
 
+  // -------------------------------
+  // Forgot password cooldown
+  // -------------------------------
+  useEffect(() => {
+    if (resetCooldown <= 0) return;
+    const timer = setTimeout(() => setResetCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resetCooldown]);
+
+  // -------------------------------
+  // Login handler
+  // -------------------------------
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  setError("");
+
+  if (!email || !password) {
+    setError("Please fill in all fields.");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await signInWithEmailAndPassword(auth, email, password);
+    const user = res.user;
+
+    if (!user.emailVerified) {
+      setUnverifiedUser(user); // store FULL user
+      setError("Your email is not verified.");
+      return; // ❌ DO NOT sign out yet
+    }
+
+    navigate("/dashboard");
+  } catch (err) {
+    console.log("LOGIN ERROR:", err);
+    setError(firebaseErrorToMessage(err));
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  // -------------------------------
+  // Resend verification email
+  // -------------------------------
+  const handleResendVerification = async () => {
+  if (!unverifiedUser || cooldown > 0) return;
+
+  try {
+    await sendEmailVerification(unverifiedUser);
+     toast.success("Verification email sent! Check your inbox.", {
+      duration: 5000, // 5 seconds
+    });
+    setCooldown(60);
+
+    await auth.signOut(); 
+    // ❌ DO NOT setUnverifiedUser(null) here
+  } catch (err) {
+    console.log("RESEND ERROR:", err);
+    toast.error("Failed to resend verification email.");
+  }
+};
+
+
+  // -------------------------------
+  // Forgot password
+  // -------------------------------
+  const handleForgotPassword = async () => {
     setError("");
 
-    if (!email || !password) {
-      setError("Please fill in all fields.");
+    if (resetCooldown > 0) return;
+
+    if (!email) {
+      setError("Please enter your email to reset your password.");
       return;
     }
 
-    setLoading(true);
-
     try {
-      const res = await signInWithEmailAndPassword(auth, email, password);
-      const user = res.user;
-
-      if (!user.emailVerified) {
-        await sendEmailVerification(user);
-
-        setUnverifiedUser(user);
-        setCooldown(60);
-        setError("Your email is not verified. Verification email sent.");
-        await auth.signOut();
-
-        return;
-      }
-
-      // verified → allow login
-      navigate("/dashboard");
+      await sendPasswordResetEmail(auth, email);
+      toast.success("Password reset email sent. Check your inbox.");
+      setResetCooldown(60);
     } catch (err) {
-      console.log("LOGIN ERROR:", err);
-
-      // SPECIAL CASE: Firebase rate limit ("too-many-requests")
-      if (err.code === "auth/too-many-requests") {
-        setError(
-          "Too many login attempts. Check your inbox and verify your email."
-        );
-        return;
-      }
-
+      console.log("FORGOT PASSWORD ERROR:", err);
       setError(firebaseErrorToMessage(err));
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleResend = async () => {
-    if (!unverifiedUser || cooldown > 0) return;
-
-    try {
-      await sendEmailVerification(unverifiedUser);
-      toast.success("Verification email resent!");
-      setCooldown(60);
-    } catch (_) {
-      toast.error("Failed to resend verification email.");
-    }
-  };
-
+  // -------------------------------
+  // JSX
+  // -------------------------------
   return (
     <div className="w-full max-w-sm sm:max-w-md bg-white p-6 sm:p-8 rounded-2xl shadow-2xl mx-auto">
       <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">
@@ -93,12 +134,12 @@ const LoginForm = ({ onToggle }) => {
       </h2>
 
       <div className="flex flex-row mb-6 rounded-xl overflow-hidden border border-gray-200">
-        <button className="flex-1 text-white py-2.5 sm:py-3 font-semibold bg-gradient-to-r from-[#090979] to-[#27AECC]">
+        <button className="flex-1 text-white py-3 font-semibold bg-gradient-to-r from-[#090979] to-[#27AECC]">
           Login
         </button>
         <button
           onClick={onToggle}
-          className="flex-1 bg-gray-100 text-gray-700 py-2.5 sm:py-3 hover:bg-gray-200 transition"
+          className="flex-1 bg-gray-100 text-gray-700 py-3 hover:bg-gray-200 transition"
         >
           Signup
         </button>
@@ -122,6 +163,22 @@ const LoginForm = ({ onToggle }) => {
           required
         />
 
+        {/* Forgot password */}
+        <p className="text-right text-sm mt-2 mb-4">
+          <span
+            onClick={handleForgotPassword}
+            className={
+              resetCooldown > 0
+                ? "text-gray-400 cursor-not-allowed"
+                : "text-blue-600 cursor-pointer hover:underline"
+            }
+          >
+            {resetCooldown > 0
+              ? `Resend in ${resetCooldown}s`
+              : "Forgot password?"}
+          </span>
+        </p>
+
         <Button
           variant="primary"
           fullWidth
@@ -141,14 +198,16 @@ const LoginForm = ({ onToggle }) => {
         <p className="text-center mt-3 text-sm">
           Didn’t receive verification email?{" "}
           <span
-            onClick={handleResend}
+            onClick={handleResendVerification}
             className={
               cooldown > 0
                 ? "text-gray-400 cursor-not-allowed"
                 : "text-blue-600 cursor-pointer hover:underline"
             }
           >
-            {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend verification email"}
+            {cooldown > 0
+              ? `Resend in ${cooldown}s`
+              : "Resend verification email"}
           </span>
         </p>
       )}
@@ -167,5 +226,3 @@ const LoginForm = ({ onToggle }) => {
 };
 
 export default LoginForm;
-
-

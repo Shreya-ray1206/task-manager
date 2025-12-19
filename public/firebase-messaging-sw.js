@@ -10,11 +10,6 @@ firebase.initializeApp({
   appId: "YOUR_APP_ID",
 });
 
-const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage((payload) => {
-  self.registration.showNotification(payload.notification.title, {
-    body: payload.notification.body,
-    icon: "/logo.png",
-  });
-});
+firebase.messaging();
+// ⛔ NO onBackgroundMessage
+// ⛔ NO showNotification

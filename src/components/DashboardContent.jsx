@@ -5,14 +5,11 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import TaskStatsChart from "./TaskStatsChart";
 import TaskStatsAnalysis from "./TaskStatsAnalysis";
+import EmptyDashboardState from "./EmptyDashboardState";
 
-/**
- * Helper: safely parse a Firestore Timestamp or JS date-like value into a Date
- * Returns null if it can't parse.
- */
+// Safe date parser
 const parseDateSafe = (val) => {
   if (!val) return null;
-  // Firestore Timestamp has toDate()
   if (typeof val.toDate === "function") {
     try {
       return val.toDate();
@@ -20,9 +17,7 @@ const parseDateSafe = (val) => {
       return null;
     }
   }
-  // If it's already a Date
   if (val instanceof Date) return val;
-  // If it's a number (ms), or a string
   const d = new Date(val);
   return isNaN(d.getTime()) ? null : d;
 };
@@ -41,45 +36,42 @@ const DashboardContent = () => {
   const { user } = useAuth();
   const [fullName, setFullName] = useState("User");
 
-  // normalize tasks reference
   const tasks = Array.isArray(tasksFromProvider) ? tasksFromProvider : [];
-
   const now = new Date();
 
-  // Fetch user info (unchanged)
+  // Fetch full name
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
         const snapshot = await getDoc(doc(db, "users", user.uid));
-        if (snapshot.exists()) setFullName(snapshot.data().fullName || "User");
+        if (snapshot.exists()) {
+          setFullName(snapshot.data().fullName || "User");
+        }
       } catch (err) {
         console.error("User fetch error:", err);
       }
     })();
   }, [user]);
 
-  // Compute buckets + deleted list. We treat 'deleted === true' as deleted.
+  // FIXED: bucket tasks AFTER filtering out deleted ones
   const tasksByStatus = useMemo(() => {
     const map = { todo: [], inProgress: [], done: [] };
     const deleted = [];
 
     tasks.forEach((t) => {
-      // defensive: ensure t.status string trimmed
-      const status = (t.status || "todo").toString();
+      const status = (t.status || "todo").toString().trim();
+
       if (t.deleted === true) {
         deleted.push(t);
         return;
       }
 
-      // only accept exact keys used across app
       if (status === "todo") map.todo.push(t);
       else if (status === "inProgress") map.inProgress.push(t);
       else if (status === "done") map.done.push(t);
       else {
-        // unknown statuses — log to console for debugging
-        console.warn("DashboardContent: task with unexpected status", t.id, status);
-        // push into todo as fallback
+        console.warn("Unexpected status:", t.id, status);
         map.todo.push(t);
       }
     });
@@ -87,24 +79,16 @@ const DashboardContent = () => {
     return { byStatus: map, deleted };
   }, [tasks]);
 
-  // createdToday — count tasks (non-deleted) whose createdAt is same day as now
+  // created today
   const createdToday = useMemo(() => {
-    let count = 0;
-    const suspicious = [];
-    tasks.forEach((t) => {
-      if (t.deleted === true) return; // ignore deleted for createdToday
+    return tasks.filter((t) => {
+      if (t.deleted === true) return false;
       const cr = parseDateSafe(t.createdAt);
-      if (!cr) suspicious.push(t.id);
-      if (cr && isSameDay(cr, now)) count++;
-    });
-    if (suspicious.length) {
-      // helpful debug: log ids that lack parsable createdAt
-      console.debug("DashboardContent: tasks missing/invalid createdAt:", suspicious);
-    }
-    return count;
+      return cr && isSameDay(cr, now);
+    }).length;
   }, [tasks, now]);
 
-  // deletedToday — count deleted tasks with deletedAt same day as now
+  // deleted today
   const deletedToday = useMemo(() => {
     return tasksByStatus.deleted.filter((t) => {
       const dt = parseDateSafe(t.deletedAt);
@@ -112,10 +96,8 @@ const DashboardContent = () => {
     }).length;
   }, [tasksByStatus, now]);
 
-  // recentTasks: use provider's tasks (which come ordered by updatedAt probably),
-  // but ensure we include deleted ones as well for the "Recent Updated Tasks" panel.
+  // recent tasks (include deleted)
   const recentTasks = useMemo(() => {
-    // If provider passed tasks ordered, we still sort defensively by parsed time
     const src = [...tasks];
     src.sort((a, b) => {
       const aTime = parseDateSafe(a.updatedAt) || parseDateSafe(a.createdAt) || new Date(0);
@@ -125,7 +107,7 @@ const DashboardContent = () => {
     return src.slice(0, 4);
   }, [tasks]);
 
-  // Stats for chart + analysis
+  // FIXED: chart data (only non-deleted tasks)
   const chartData = {
     todo: tasksByStatus.byStatus.todo.length,
     inProgress: tasksByStatus.byStatus.inProgress.length,
@@ -133,14 +115,17 @@ const DashboardContent = () => {
     deleted: tasksByStatus.deleted.length,
   };
 
+  // FIXED: totalVisible is now 100% correct
+  const totalVisible =
+    tasksByStatus.byStatus.todo.length +
+    tasksByStatus.byStatus.inProgress.length +
+    tasksByStatus.byStatus.done.length;
+
   const stats = {
-    todo: chartData.todo,
-    inProgress: chartData.inProgress,
-    done: chartData.done,
-    deleted: chartData.deleted,
+    ...chartData,
     deletedToday,
     createdToday,
-    totalVisible: chartData.todo + chartData.inProgress + chartData.done, // matches TaskBoard view
+    totalVisible,
     recentUpdates: tasks.filter((t) => {
       const upd = parseDateSafe(t.updatedAt) || parseDateSafe(t.createdAt);
       return upd && isSameDay(upd, now);
@@ -149,87 +134,152 @@ const DashboardContent = () => {
 
   if (tasksLoading) return <p>Loading dashboard...</p>;
 
-  return (
-    <div className="space-y-8">
-      {/* Top Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-r from-[#6A11CB] to-[#2575FC] p-5 rounded-2xl shadow-md text-white">
-          <h3 className="text-lg font-semibold">Total Tasks</h3>
-          <p className="text-2xl font-bold mt-2">{stats.totalVisible}</p>
-        </div>
+  // BEFORE RETURN — compute empty state
+const isEmpty = !tasksLoading && stats.totalVisible === 0;
 
-        <div className="bg-gradient-to-r from-[#FF9966] to-[#FF5E62] p-5 rounded-2xl shadow-md text-white">
-          <h3 className="text-lg font-semibold">Completed</h3>
-          <p className="text-2xl font-bold mt-2">{stats.done}</p>
-        </div>
+return (
+  <div className="space-y-8">
+    {/* If NO tasks → show empty dashboard */}
+    {isEmpty ? (
+      <EmptyDashboardState />
+    ) : (
+      <>
+{/* Top Stats */}
+<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
 
-        <div className="bg-gradient-to-r from-[#00c6ff] to-[#0072ff] p-5 rounded-2xl shadow-md text-white">
-          <h3 className="text-lg font-semibold">In Progress</h3>
-          <p className="text-2xl font-bold mt-2">{stats.inProgress}</p>
-        </div>
-      </div>
+  {/* Total Tasks */}
+  <div className="bg-gradient-to-r from-[#7F00FF] to-[#E100FF] p-3 sm:p-4 rounded-2xl shadow-lg text-white">
+    <h3 className="text-xs sm:text-sm font-medium">Total</h3>
+    <p className="text-xl sm:text-2xl font-bold mt-1">
+      {stats.totalVisible}
+    </p>
+  </div>
 
-      {/* Main Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* LEFT — Recent Tasks */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Recent Updated Tasks</h2>
-            <div className="space-y-4">
-              {recentTasks.map((task) => {
-                const updatedTime = parseDateSafe(task.updatedAt) || parseDateSafe(task.createdAt) || new Date();
-                const priority = (task.priority || "medium").toString().toLowerCase();
-                const isDeleted = task.deleted === true;
+  {/* To-Do */}
+  <div className="bg-gradient-to-r from-[#F7971E] to-[#FFD200] p-3 sm:p-4 rounded-2xl shadow-lg text-white">
+    <h3 className="text-xs sm:text-sm font-medium">To-Do</h3>
+    <p className="text-xl sm:text-2xl font-bold mt-1">
+      {stats.todo}
+    </p>
+  </div>
 
-                return (
-                  <div
-                    key={task.id}
-                    className={`bg-gray-50 rounded-xl p-4 shadow-sm border ${
-                      isDeleted ? "border-red-300 bg-red-50 opacity-75" : "border-gray-200"
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <h3 className={`text-sm font-semibold ${isDeleted ? "text-red-700 line-through" : "text-gray-900"}`}>
-                        {task.title}
-                        {isDeleted && <span className="ml-2 text-xs text-red-500">(Deleted)</span>}
-                      </h3>
-                      <span className="text-gray-400 text-xs">
-                        {isDeleted ? "🗑️" : task.status === "todo" ? "📝" : task.status === "inProgress" ? "⚙️" : "✅"}
-                      </span>
+  {/* Completed */}
+  <div className="bg-gradient-to-r from-[#11998E] to-[#38EF7D] p-3 sm:p-4 rounded-2xl shadow-lg text-white">
+    <h3 className="text-xs sm:text-sm font-medium">Done</h3>
+    <p className="text-xl sm:text-2xl font-bold mt-1">
+      {stats.done}
+    </p>
+  </div>
+
+  {/* In Progress */}
+  <div className="bg-gradient-to-r from-[#00C6FF] to-[#0072FF] p-3 sm:p-4 rounded-2xl shadow-lg text-white">
+    <h3 className="text-xs sm:text-sm font-medium">In Progress</h3>
+    <p className="text-xl sm:text-2xl font-bold mt-1">
+      {stats.inProgress}
+    </p>
+  </div>
+
+</div>
+
+
+
+        {/* Main Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          {/* LEFT — recent */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl shadow-md p-6">
+              <h2 className="text-lg font-semibold mb-4">Recent Updated Tasks</h2>
+
+              <div className="space-y-4">
+                {recentTasks.map((task) => {
+                  const updatedTime =
+                    parseDateSafe(task.updatedAt) ||
+                    parseDateSafe(task.createdAt) ||
+                    new Date();
+                  const isDeleted = task.deleted === true;
+
+                  return (
+                    <div
+                      key={task.id}
+                      className={`bg-gray-50 rounded-xl p-4 shadow-sm border ${
+                        isDeleted
+                          ? "border-red-300 bg-red-50 opacity-75"
+                          : "border-gray-200"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <h3
+                          className={`text-sm font-semibold ${
+                            isDeleted
+                              ? "text-red-700 line-through"
+                              : "text-gray-900"
+                          }`}
+                        >
+                          {task.title}
+                          {isDeleted && (
+                            <span className="ml-2 text-xs text-red-500">
+                              (Deleted)
+                            </span>
+                          )}
+                        </h3>
+                        <span className="text-gray-400 text-xs">
+                          {isDeleted
+                            ? "🗑️"
+                            : task.status === "todo"
+                            ? "📝"
+                            : task.status === "inProgress"
+                            ? "⚙️"
+                            : "✅"}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-gray-600 mt-1 line-clamp-1">
+                        {task.description}
+                      </p>
+
+                      <div className="mt-2 flex justify-between items-center">
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-md ${
+                            isDeleted
+                              ? "bg-gray-200 text-gray-500"
+                              : task.priority === "high"
+                              ? "bg-red-100 text-red-700"
+                              : task.priority === "medium"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-green-100 text-green-700"
+                          }`}
+                        >
+                          {isDeleted
+                            ? "DELETED"
+                            : (task.priority || "MEDIUM").toUpperCase()}
+                        </span>
+
+                        <span className="text-gray-400 text-[10px]">
+                          {updatedTime.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
 
-                    <p className="text-xs text-gray-600 mt-1 line-clamp-1">{task.description}</p>
-
-                    <div className="mt-2 flex justify-between items-center">
-                      <span className={`text-[10px] px-2 py-0.5 rounded-md ${
-                        isDeleted ? "bg-gray-200 text-gray-500" :
-                        priority === "high" ? "bg-red-100 text-red-700" :
-                        priority === "medium" ? "bg-yellow-100 text-yellow-700" :
-                        "bg-green-100 text-green-700"
-                      }`}>
-                        {isDeleted ? "DELETED" : priority.toUpperCase()}
-                      </span>
-                      <span className="text-gray-400 text-[10px]">{updatedTime.toLocaleString()}</span>
-                    </div>
-                  </div>
-                );
-              })}
+          {/* RIGHT — chart + insights */}
+          <div className="h-full">
+            <div className="h-full bg-white rounded-2xl shadow-md p-6 flex flex-col">
+              <TaskStatsChart data={chartData} />
+              <div className="mt-6">
+                <TaskStatsAnalysis stats={stats} />
+              </div>
             </div>
           </div>
         </div>
+      </>
+    )}
+  </div>
+ );
 
-        {/* RIGHT — Chart + Insights */}
-        <div className="h-full">
-          <div className="h-full bg-white rounded-2xl shadow-md p-6 flex flex-col">
-            <TaskStatsChart data={chartData} />
-            <div className="mt-6">
-              <TaskStatsAnalysis stats={stats} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 export default DashboardContent;
